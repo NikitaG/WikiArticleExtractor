@@ -1,15 +1,15 @@
 import logging
 import time
-from threading import Thread
 from queue import Queue
-from multiprocessing import Value
+from threading import Thread
 
-from filereader import FileReader
 from databaseWriter import DatabaseWriter, DatabaseConfig
+from filereader import FileReader
 from jsonProcessor import JsonProcessor
 
-config = DatabaseConfig(host="localhost", database="articleLocation", table="ArticleLocationTmp", user="postgres",
+config = DatabaseConfig(host="localhost", database="articleLocation", table="\"ArticleLocation\"", user="postgres",
                         password="123456")
+
 
 def process_dump(input_file, out_file, workers_count):
     """
@@ -28,30 +28,30 @@ def process_dump(input_file, out_file, workers_count):
     # input queue
     jobs_queue = Queue(maxsize=maxsize)
 
-    fileReader = FileReader(input_file)
-    databaseWriter = DatabaseWriter(config)
+    file_reader = FileReader(input_file)
+    database_writer = DatabaseWriter(config, buffer_size=1000)
+    database_writer.check_connection()
 
     workers = []
     for i in range(workers_count):
         worker = JsonProcessor(i)
         extractor = Thread(target=worker.execute,
-                            args=(jobs_queue, output_queue))
+                           args=(jobs_queue, output_queue))
         extractor.daemon = True  # only live while parent process lives
         extractor.start()
 
         worker.process = extractor
         workers.append(worker)
 
-    output = Thread(target=databaseWriter.execute,
-                     args=(output_queue, ))
+    output = Thread(target=database_writer.execute,
+                    args=(output_queue,))
     output.start()
 
     output_queue_size = lambda: output_queue.qsize()
     # map job that sorts and prints output
-    map = Thread(target=fileReader.execute,
-                  args=(jobs_queue, output_queue_size, maxsize))
+    map = Thread(target=file_reader.execute,
+                 args=(jobs_queue, output_queue_size))
     map.start()
-
 
     map.join()
     output.join()
@@ -62,6 +62,7 @@ def process_dump(input_file, out_file, workers_count):
     for w in workers:
         w.process.join()
 
+
 def main():
     createLogger(False, True)
 
@@ -70,6 +71,7 @@ def main():
     threads = 1
 
     process_dump(input_file, output_path, threads)
+
 
 def readFile():
     import bz2
@@ -81,20 +83,18 @@ def readFile():
         while True:
             i += 1
 
-            l = len(f.read(1024*1024))
+            l = len(f.read(1024 * 1024))
             if l == 0: break;
 
             total += l
 
-            print("{:6.2f}.".format((total//1024//1024) / (time.time() - start)))
-        print(total/1024/1024/1024)
-
-
-
+            print("{:6.2f}.".format((total // 1024 // 1024) / (time.time() - start)))
+        print(total / 1024 / 1024 / 1024)
 
 
 def createLogger(quiet, debug):
-    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
+    logging.basicConfig(filename='wikidata.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
+                        level=logging.DEBUG)
 
     logger = logging.getLogger()
 
@@ -105,6 +105,7 @@ def createLogger(quiet, debug):
 
     return logger
 
+
 if __name__ == '__main__':
-    #readFile()
+    # readFile()
     main()

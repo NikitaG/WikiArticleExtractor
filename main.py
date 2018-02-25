@@ -61,14 +61,18 @@ def logInfo(json):
 def processFile(file):
     counter = 0
     locations = 0
+    totalSize = 0
     now = time.time()
     for line in file:
 
         counter += 1
+
+        totalSize += len(line)
         line = line.decode('utf-8')
 
         if counter % 100 == 0:
-            print("Rows processed:", counter, counter / (time.time() - now), time.time() - now)
+            e = time.time() - now
+            print("Rows processed:", counter, counter / e, e, totalSize/1024/1024/e)
 
         json = convert(line)
         if not json: continue

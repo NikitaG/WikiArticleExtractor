@@ -93,8 +93,11 @@ def readFile():
 
 
 def createLogger(quiet, debug):
-    logging.basicConfig(filename='wikidata.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
-                        level=logging.DEBUG)
+    fh = logging.FileHandler("wikidata.log")
+    fh.setLevel(logging.ERROR)
+
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
+                        level=logging.DEBUG, handlers=[fh, logging.StreamHandler()])
 
     logger = logging.getLogger()
 

@@ -27,7 +27,7 @@ class JsonProcessor:
                 try:
                     location = self.extract_info(obj)
                 except Exception as error:
-                    logging.error("Error in extraction_info: " + error)
+                    logging.error("Error in extraction_info: {}".format(error))
                 if not location: continue
 
                 output_queue.put(location)
@@ -40,7 +40,7 @@ class JsonProcessor:
 
         logging.info("JsonProcessor #{} completed.".format(self.__id))
 
-    def extract_info(self, json: object) -> object:
+    def extract_info(self, json):
         if 'labels' not in json or \
                 'en' not in json['labels']:
             # logging.debug("Label not found", json)
@@ -65,7 +65,7 @@ class JsonProcessor:
             if 'datavalue' in coordinates[0]['mainsnak']:
                 location = coordinates[0]['mainsnak']['datavalue']['value']
             else:
-                logging.error('Invalid location: '+ coordinates[0]['mainsnak'] )
+                logging.error('Invalid location: '+ str(coordinates) )
 
         if location['globe'] != 'http://www.wikidata.org/entity/Q2':
             return None

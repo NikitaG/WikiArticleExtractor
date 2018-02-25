@@ -66,9 +66,9 @@ def process_dump(input_file, out_file, workers_count):
 def main():
     createLogger(False, True)
 
-    input_file = '../wikidata.json.bz2'
+    input_file = '../wikidata.json.gz'#'../wikidata.json.bz2'
     output_path = ''
-    threads = 1
+    threads = 8
 
     process_dump(input_file, output_path, threads)
 

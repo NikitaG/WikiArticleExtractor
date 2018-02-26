@@ -1,9 +1,9 @@
-import sys
 import fileinput
 import logging
 import os
+import sys
 import time
-import gzip, io
+import subprocess
 
 suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
@@ -19,7 +19,9 @@ class FileReader:
             input = sys.stdin
         else:
             # input = io.BufferedReader(gzip.open(input_file))
-            input = fileinput.hook_compressed(input_file, "r")
+            self.__pigz = subprocess.Popen('pigz -d -c /Users/nikitagolovkin/Projects/wikiConverter/data/latest-all.json.gz'.split(),
+                             stdout=subprocess.PIPE)
+            input = self.__pigz.stdout#fileinput.hook_compressed(input_file, "r")
 
         self.__input = input
         pass
@@ -38,7 +40,11 @@ class FileReader:
             job = (id, line)
             size += len(line)
 
+            s = time.time()
             jobs_queue.put(job)
+            e = time.time()-s
+            if e > 0.001:
+                logging.debug("Wait: {}".format(e))
 
             if id % 1000 == 0:
                 counter.count(1000, size, time.time() - start)
@@ -49,6 +55,10 @@ class FileReader:
                 logging.info(counter.get_info("Queue: {}, Out: {}".format(jobs_queue.qsize(), spool_length())))
 
         self.close()
+
+        counter.count(id % 1000, size, time.time() - start)
+        logging.info(counter.get_info("Queue: {}, Out: {}".format(jobs_queue.qsize(), spool_length())))
+
         logging.info("Reading file finished.")
 
     def close(self):

@@ -1,6 +1,11 @@
 import logging
 import time
 import ujson
+import cProfile
+
+cities = {'Q515', 'Q532', 'Q486972'}
+countries = {'Q6256', 'Q3624078'}
+regions = {'Q35657', 'Q28872924'}
 
 
 class JsonProcessor:
@@ -8,39 +13,52 @@ class JsonProcessor:
         self.__id = id
 
         self.process = None
+
+        self.subclasses = 0
+        #self.profile =  cProfile.Profile()
+        #self.profile.enable()
         pass
 
     def execute(self, jobs_queue, output_queue):
         logging.info("JsonProcessor #{} is starting...".format(self.__id))
 
         while True:
-            job = jobs_queue.get()
-            if job:
-                job_id = job[0]
-                line = job[1].decode('utf-8')
+            jobs = jobs_queue.get()
 
-                if not line or line[0] != "{": continue
+            if jobs:
+                for job in jobs:
+                    job_id = job[0]
+                    line = job[1].decode('utf-8')
 
-                obj = self.convert(line[:-2])
-                if not obj: continue
+                    if not line or line[0] != "{": continue
 
-                try:
-                    location = self.extract_info(obj)
-                except Exception as error:
-                    logging.error("Error in extraction_info: {}".format(error))
-                if not location: continue
+                    obj = self.convert(line[:-2])
+                    if not obj:
+                        continue
 
-                output_queue.put(location)
+                    try:
+                        location = self.extract_info(obj)
+                    except Exception as error:
+                        location = None
+                        logging.error("Error in extraction_info: {}".format(error))
 
-                # tim# e.sleep(0.001)
-                # logging.debug("Processing job #{} in processor #{}".format(job[0], self.__id))
-                pass
+                    if not location:
+                        continue
+
+                    output_queue.put(('location', location))
+
+                    if self.subclasses % 1000 == 0:
+                        logging.info("Total subclasses: {}.".format(self.subclasses))
             else:
                 break
-
-        logging.info("JsonProcessor #{} completed.".format(self.__id))
+        #self.profile.disable()
+        #self.profile.print_stats("tottime")
+        logging.info("JsonProcessor #{} completed. Total subclasses: {}".format(self.__id, self.subclasses))
 
     def extract_info(self, json):
+        if 'P279' in json['claims']:
+            self.subclasses += 1
+
         if 'labels' not in json or \
                 'en' not in json['labels']:
             # logging.debug("Label not found", json)
@@ -72,14 +90,17 @@ class JsonProcessor:
 
         heritage = 'P1435' in json['claims']
         images = self.__claim_values(json, "P18")
-        image = images[0] if images else None
+        imagesList = list(images) if images else None
 
         p31 = self.__extract_claim_value_id(json, "P31")
-        tourist_attraction, archaeological_sites, city, country = 'Q570116' in p31, 'Q839954' in p31, 'Q515' in p31, 'Q159' in p31
+        p3134 = self.__claim_values(json, "P3134")
+        tourist_attraction, archaeological_sites = 'Q570116' in p31, 'Q839954' in p31
+        city, region, country = bool(cities & p31), bool(regions & p31), bool(countries & p31)
+        trip_advisor_id = list(p3134) if p3134 else None
 
-        return {'type': json['type'], 'id': json['id'], 'title': title, 'description': decription, 'image': image,
+        return {'type': json['type'], 'id': json['id'], 'title': title, 'description': decription, 'images': imagesList,
                 'location': location, 'heritage': heritage,
-                'tourist_attraction': tourist_attraction, 'archaeological_sites': archaeological_sites, 'city': city, 'country': country}
+                'tourist_attraction': tourist_attraction, 'archaeological_sites': archaeological_sites, 'city': city, 'region': region, 'country': country, 'trip_advisor_id': trip_advisor_id}
 
     def __extract_claim_value_id(self, json, claim_id):
         if claim_id not in json['claims']:
@@ -95,8 +116,11 @@ class JsonProcessor:
 
     def convert(self, json_string):
         try:
-            json = ujson.loads(json_string)
-            return json
+            if json_string[:14] != '{"type":"item"':
+                return None
+
+            js = ujson.loads(json_string)
+            return js
         except Exception as error:
             logging.error("Couldn't convert json: {}".format(error))
             return None

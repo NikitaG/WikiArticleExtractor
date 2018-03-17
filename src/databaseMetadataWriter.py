@@ -22,13 +22,12 @@ class DatabaseWriter:
         self.__config = config
         self.__connection = None
 
-        columns = ["type", "wiki_id", "title", "description", "images", "longitude", "latitude", "coord_precision",
-                   "heritage", "tourist_attraction", "archaeological_sites", "trip_advisor_id", "city", "region", "country"]
+        columns = ["id", "label_en", "label_ru", "description_en", "description_ru", "subclasses", "instances"]
         # values = ["%s" for _ in columns]
 
         self.__sql = "INSERT INTO public.{} ({}) VALUES %s; ".format(config.table, ",".join(columns))
         self.__buffer = []
-        self.__buffer_size = buffer_size
+        self.__buffer_size = 1#buffer_size
         self.__totalRecords = 0
 
     def check_connection(self):
@@ -60,12 +59,8 @@ class DatabaseWriter:
             while True:
                 item = output_queue.get()
                 if item:
-                    if item[0] == 'location':
+                    if item[0] == 'metadata':
                         self.__addObject(item[1])
-                    elif item[0] == 'metadata':
-                        meta = item[1]
-                        # logging.info(meta)
-                        properties[meta['id']] = meta
                     item = None
                 else:
                     break
@@ -76,10 +71,7 @@ class DatabaseWriter:
 
     def __addObject(self, obj):
         self.__buffer.append((
-            obj['type'], obj['id'], obj['title'], obj['description'], obj['images'], obj['location']['longitude'],
-            obj['location']['latitude'],
-            obj['location']['precision'], obj['heritage'], obj['tourist_attraction'], obj['archaeological_sites'], obj['trip_advisor_id'],
-            obj['city'], obj['region'], obj['country']))
+            obj['id'], obj['label_en'], obj['label_ru'], obj['description_en'], obj['description_ru'], obj['subclasses'], obj['instances']))
 
         if len(self.__buffer) >= self.__buffer_size:
             self.__commit_buffer()

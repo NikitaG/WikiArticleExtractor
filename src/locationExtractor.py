@@ -10,10 +10,10 @@ from filereader import FileReader
 from jsonProcessor import JsonProcessor
 from jsonMetadataProcessor import JsonMetadataProcessor
 
-config = DatabaseConfig(host="localhost", database="articleLocation", table="properties_mapping", user="postgres",
+config = DatabaseConfig(host="localhost", database="articleLocation", table="wiki_data_location", user="postgres",
                         password="123456")
 
-json_processor_class = JsonMetadataProcessor
+json_processor_class = JsonProcessor
 
 
 def process_dump(input_file, out_file, workers_count):

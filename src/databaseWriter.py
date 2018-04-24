@@ -23,7 +23,7 @@ class DatabaseWriter:
         self.__connection = None
 
         columns = ["type", "wiki_id", "title", "description", "images", "longitude", "latitude", "coord_precision",
-                   "heritage", "tourist_attraction", "archaeological_sites", "trip_advisor_id", "city", "region", "country"]
+                   "heritage", "tourist_attraction", "archaeological_sites", "trip_advisor_id", "city", "region", "country", "wiki_links"]
         # values = ["%s" for _ in columns]
 
         self.__sql = "INSERT INTO public.{} ({}) VALUES %s; ".format(config.table, ",".join(columns))
@@ -79,7 +79,7 @@ class DatabaseWriter:
             obj['type'], obj['id'], obj['title'], obj['description'], obj['images'], obj['location']['longitude'],
             obj['location']['latitude'],
             obj['location']['precision'], obj['heritage'], obj['tourist_attraction'], obj['archaeological_sites'], obj['trip_advisor_id'],
-            obj['city'], obj['region'], obj['country']))
+            obj['city'], obj['region'], obj['country'], obj['wiki_links']))
 
         if len(self.__buffer) >= self.__buffer_size:
             self.__commit_buffer()

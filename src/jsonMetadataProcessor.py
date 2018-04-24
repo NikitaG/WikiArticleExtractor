@@ -3,9 +3,9 @@ import time
 import ujson
 import cProfile
 
-cities = {'Q515', 'Q532', 'Q486972'}
-countries = {'Q6256', 'Q3624078'}
-regions = {'Q35657', 'Q28872924'}
+exclude = {'Q5','Q515', 'Q577', 'Q532', 'Q486972','Q6256', 'Q3624078','Q35657', 'Q28872924', 'Q47018901', 'Q10373548',
+           'Q7854', 'Q33146843', 'Q16521','Q4167410', 'Q11424', 'Q482994', 'Q484170', 'Q747074', 'Q4167836', 'Q13406463',
+           'Q3863', 'Q11266439'}
 
 
 class JsonMetadataProcessor:
@@ -52,11 +52,17 @@ class JsonMetadataProcessor:
         logging.info("JsonProcessor #{} completed.".format(self.__id))
 
     def extract_info(self, json):
+            # if json['id'] not in exclude:
+            #     return None
+
         if 'en' not in json['labels']:
             return None
 
-        instances = list(self.__extract_claim_value_id(json, "P31"))
-        subclasses = list(self.__extract_claim_value_id(json,"P279"))
+        instances = self.__extract_claim_value_id(json, "P31")
+        # if bool(instances & exclude):
+        #     return None
+
+        subclasses = self.__extract_claim_value_id(json,"P279")
 
         label = json['labels']['en']['value'] if 'en' in json['labels'] else None
         labelRu = json['labels']['ru']['value'] if 'ru' in json['labels'] else None
@@ -64,7 +70,7 @@ class JsonMetadataProcessor:
         descr = json['descriptions']['en']['value'] if 'en' in json['descriptions'] else None
         descrRu = json['descriptions']['ru']['value'] if 'ru' in json['descriptions'] else None
 
-        return {'id': json['id'], 'label_en': label, 'label_ru': labelRu, 'description_en': descr, 'description_ru': descrRu, 'instances': instances, 'subclasses': subclasses}
+        return {'id': json['id'], 'label_en': label, 'label_ru': labelRu, 'description_en': descr, 'description_ru': descrRu, 'instances': list(instances), 'subclasses': list(subclasses)}
 
     def __extract_claim_value_id(self, json, claim_id):
         if claim_id not in json['claims']:

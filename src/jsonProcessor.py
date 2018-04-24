@@ -97,10 +97,12 @@ class JsonProcessor:
         tourist_attraction, archaeological_sites = 'Q570116' in p31, 'Q839954' in p31
         city, region, country = bool(cities & p31), bool(regions & p31), bool(countries & p31)
         trip_advisor_id = list(p3134) if p3134 else None
+        wikiLinks = list(filter(lambda x: x["site"][:2] == 'en', json["sitelinks"]))
 
         return {'type': json['type'], 'id': json['id'], 'title': title, 'description': decription, 'images': imagesList,
                 'location': location, 'heritage': heritage,
-                'tourist_attraction': tourist_attraction, 'archaeological_sites': archaeological_sites, 'city': city, 'region': region, 'country': country, 'trip_advisor_id': trip_advisor_id}
+                'tourist_attraction': tourist_attraction, 'archaeological_sites': archaeological_sites, 'city': city, 'region': region, 'country': country, 'trip_advisor_id': trip_advisor_id,
+                'wiki_links': wikiLinks }
 
     def __extract_claim_value_id(self, json, claim_id):
         if claim_id not in json['claims']:

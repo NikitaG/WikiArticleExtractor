@@ -27,7 +27,7 @@ class DatabaseWriter:
 
         self.__sql = "INSERT INTO public.{} ({}) VALUES %s; ".format(config.table, ",".join(columns))
         self.__buffer = []
-        self.__buffer_size = 1#buffer_size
+        self.__buffer_size = buffer_size
         self.__totalRecords = 0
 
     def check_connection(self):
@@ -71,10 +71,14 @@ class DatabaseWriter:
 
     def __addObject(self, obj):
         self.__buffer.append((
-            obj['id'], obj['label_en'], obj['label_ru'], obj['description_en'], obj['description_ru'], obj['subclasses'], obj['instances']))
+            self.__id_to_int(obj['id']), obj['label_en'], obj['label_ru'], obj['description_en'], obj['description_ru'],
+            list(map(self.__id_to_int, obj['subclasses'])), list(map(self.__id_to_int, obj['instances']))))
 
         if len(self.__buffer) >= self.__buffer_size:
             self.__commit_buffer()
+
+    def __id_to_int(self, ids):
+        return int(ids[1:])
 
     def __commit_buffer(self):
         if not self.__buffer:

@@ -53,7 +53,7 @@ class DatabaseWriter:
 
     def execute(self, output_queue):
         logging.info("DatabaseWriter #{} is starting...".format(self.__id))
-
+        return
         properties = {}
         with open('properties.json', 'w') as file:
 

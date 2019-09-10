@@ -45,7 +45,7 @@ class JsonProcessor:
                     if not location:
                         continue
 
-                    output_queue.put(('location', location))
+                    # output_queue.put(('location', location))
 
                     if self.subclasses % 1000 == 0:
                         logging.info("Total subclasses: {}.".format(self.subclasses))
@@ -97,7 +97,7 @@ class JsonProcessor:
         tourist_attraction, archaeological_sites = 'Q570116' in p31, 'Q839954' in p31
         city, region, country = bool(cities & p31), bool(regions & p31), bool(countries & p31)
         trip_advisor_id = list(p3134) if p3134 else None
-        wikiLinks = list(filter(lambda x: x["site"][:2] == 'en', json["sitelinks"]))
+        wikiLinks = list(filter(lambda x: "site" in x and x["site"][:2] == 'en', json["sitelinks"])) if "sitelinks" in json else None
 
         return {'type': json['type'], 'id': json['id'], 'title': title, 'description': decription, 'images': imagesList,
                 'location': location, 'heritage': heritage,
